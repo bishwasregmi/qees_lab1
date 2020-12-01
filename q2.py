@@ -24,7 +24,11 @@ t2 = abs(t.ppf((1 - alpha_2) / 2, df=dof)) * sem
 
 c1 = [mu - t1, mu + t1]
 c2 = [mu - t2, mu + t2]
-
+print(dof)
+print(std)
+print(mu)
+print(c1)
+print(c2)
 # plt.hist(data, density=True, bins=20, color='y')
 plt.axvline(mu, color='k', label="sample_mean")
 plt.axvline(c1[0], color='g', label="ConfidenceInterval_"+str(alpha_1))
