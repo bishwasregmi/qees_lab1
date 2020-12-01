@@ -16,7 +16,7 @@ confidence_level = 0.95
 degrees_freedom =len(data)-1
 sample_mean = np.mean(data)
 sample_standard_error = scipy.stats.sem(data)
-t = (sample_mean())/(sample_standard_error*np.sqrt(2/len(data)))
+
 
 confidence_interval = t.interval(confidence_level, degrees_freedom, sample_mean, sample_standard_error)
 tplot = t.pdf(data,degrees_freedom)
