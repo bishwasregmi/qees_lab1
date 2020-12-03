@@ -8,12 +8,21 @@ from numpy import loadtxt
 from python_scripts.definitions import *
 
 EVAL_NUM = 3000
+RT = 'ON'
+dds = 'fastrtps'
+rebuild = False
+q = 'q1'
 
 
 if __name__ == "__main__":
-    set_EVAL_NUM(intr_proc_lstnr_path, intr_proc_tlkr_path, EVAL_NUM)
-    run_meas()
-    make_boxplot(EVAL_NUM)
+    a = set_RT(RT)
+    b = set_EVAL_NUM(EVAL_NUM)
+    rebuild = a or b
+    if rebuild:
+        rebuild_nodes()
+    run_meas(dds)
+    meas_data = load_meas_data()
+    make_boxplot(meas_data, q, dds)
 
 
 
