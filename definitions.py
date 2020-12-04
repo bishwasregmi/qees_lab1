@@ -187,7 +187,7 @@ def make_boxplot(meas_data, dds, RT="ON", LD="OFF"):
     # x = [256*pow(2,i) for i in range(15)]
     x = range(1, 16)
     fig = plt.figure(figsize=[10,7.5])
-    plt.boxplot(meas_data, showfliers=False)
+    plt.boxplot(meas_data, showfliers=True)
     plt.xticks(x, file_sizes)
     plt.ylabel("latency [s]")
     plt.xlabel("data size")
@@ -200,26 +200,15 @@ def make_boxplot(meas_data, dds, RT="ON", LD="OFF"):
     #     f.close()
 
 
-def open_boxplot():
-    q = input('q : ')
-    num = input('num : ')
-    dds = input('dds : ')
-    f_name = 'python_scripts/figures/' + q + '_box_' + str(num) + '_' + dds + '.pickle'
-    print(f_name)
-    fig = plt.figure()
-    fig = pickle.load(open(f_name, 'rb'))
-    fig.show()
-
-
-def make_histogram(meas_data, dds):
+def make_histogram(meas_data, dds, RT, LD):
     num = len(meas_data[0])
     idx= range(15)
-    idx = [0, 9]
+    idx = [12,11,14]
     for i, data in enumerate(meas_data):
         if i in idx:
             plt.figure()
             plt.hist(data)
-            plt.title(dds + " EVAL_NUM=" + str(num) + " " + file_sizes[i])
+            plt.title(dds + ": EVAL_NUM=" + str(num) + ", " + file_sizes[i]+ f", RT={RT}, CPU LD={LD}")
             plt.xlabel('latency [s]')
             plt.ylabel("count")
             plt.show()
