@@ -1,12 +1,14 @@
 from python_scripts.definitions import *
 
-EVAL_NUM = 3000
+EVAL_NUM = 500
 RT = "ON"
 LD = "OFF"
 q = 'q3'
 
 ddses = ['fastrtps', 'opensplice', 'connext']
 dds = ddses[0]
+
+print(f"Current config. : {q} {dds} {EVAL_NUM}, RT:{RT}, LD:{LD}")
 
 rebuild_flag = False
 a = set_EVAL_NUM(EVAL_NUM)
@@ -19,6 +21,6 @@ if rebuild_flag:
 run_meas(dds, EVAL_NUM, RT, LD)
 
 meas_data = load_meas_data_q3(dds, EVAL_NUM, RT, LD)
-make_boxplot(meas_data, q, dds)
-# make_histogram(meas_data, q, dds)
+# make_boxplot(meas_data, dds, RT, LD)
+make_histogram(meas_data, dds)
 

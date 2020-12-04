@@ -115,27 +115,29 @@ def run_meas(dds, num, RT, LD):
 
     answer = " "
     while answer != "yes" and answer != "no":
-        answer = input("Are you sure you want to clean eval-times? \n Type 'yes' or 'no' : \n")
+        answer = input("Type 'yes' to Clean eval-times and Re-measure. Type 'no' to just plot. \n : ")
     if answer == 'yes':
         clean_eval_time()
 
     while answer != "Done" and answer != "no":
         if LD == 'OFF':
-            instr = "Run the following commands and type 'Done' to continue : \n" \
+            instr = "Run the following commands: \n" \
                     "  *open terminal* \n" \
                     "  cd " + str(main_dir_path) + " \n" \
-                                                   "  ros2 run interprocess_eval listener_interprocess__rmw_" + dds + "_cpp \n" \
-                                                                                                                      "  CTRL+SHIFT+N \n" \
-                                                                                                                      "  ros2 run interprocess_eval talker_interprocess__rmw_" + dds + "_cpp \n"
+                    "  ros2 run interprocess_eval listener_interprocess__rmw_" + dds + "_cpp \n" \
+                    "  CTRL+SHIFT+N \n" \
+                    "  ros2 run interprocess_eval talker_interprocess__rmw_" + dds + "_cpp \n" \
+                    "Type 'Done' to continue when the nodes have finished\n:"
         else:
             instr = "Run the following commands and type 'Done' to continue : \n" \
                     "  *open terminal* \n" \
                     "  cd " + str(main_dir_path) + " \n" \
-                                                   "  ros2 run artificial_load CPU_load \n" \
-                                                   "  CTRL+SHIFT+N \n" \
-                                                   "  ros2 run interprocess_eval listener_interprocess__rmw_" + dds + "_cpp \n" \
-                                                                                                                      "  CTRL+SHIFT+N \n" \
-                                                                                                                      "  ros2 run interprocess_eval talker_interprocess__rmw_" + dds + "_cpp \n"
+                    "  ros2 run artificial_load CPU_load \n" \
+                    "  CTRL+SHIFT+N \n" \
+                    "  ros2 run interprocess_eval listener_interprocess__rmw_" + dds + "_cpp \n" \
+                    "  CTRL+SHIFT+N \n" \
+                    "  ros2 run interprocess_eval talker_interprocess__rmw_" + dds + "_cpp \n" \
+                    "Type 'Done' to continue when the nodes have finished\n:"
         answer = input(instr)
 
     if answer == "Done":
@@ -145,25 +147,32 @@ def run_meas(dds, num, RT, LD):
 
         from_dir = os.path.join(main_dir_path, 'evaluation/transport_time')
         to_dir = os.path.join(main_dir_path,
-                              'evaluation/transport_time_' + str(num) + "_" + dds + "_RT_" + RT + "_LD_" + LD)
+                              'python_scripts/measurements/transport_time_' + str(num) + "_" + dds + "_RT_" + RT + "_LD_" + LD)
         copy_tree(from_dir, to_dir)
         print(f"Measurements saved in {str(to_dir)}")
 
 
-def load_meas_data():
-    meas_data = [0] * 15
-    meas_files = os.listdir(meas_path)
-    for file in meas_files:
-        try:
-            meas_data[index[file]] = loadtxt(os.path.join(meas_path, file), dtype=np.float64)
-        except:
-            pass
+def load_meas_data_q1(nums):
+    RT = 'ON'
+    dds = 'fastrtps'
+    LD = 'OFF'
+    meas_data = [[0]*15 for _ in range(len(nums))]
+    for i in range(len(nums)):
+        path = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_' + str(nums[i]) + "_" + dds + "_RT_" + RT + "_LD_" + LD)
+        print(f'loading meas data from {path}')
+        meas_files = os.listdir(path)
+        for file in meas_files:
+            try:
+                meas_data[i][index[file]] = loadtxt(os.path.join(path, file), dtype=np.float64)
+            except:
+                pass
+
     return meas_data
 
 
 def load_meas_data_q3(dds, num, RT, LD):
     meas_data = [0] * 15
-    path = os.path.join(main_dir_path, 'evaluation/transport_time_' + str(num) + "_" + dds + "_RT_" + RT + "_LD_" + LD)
+    path = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_' + str(num) + "_" + dds + "_RT_" + RT + "_LD_" + LD)
     meas_files = os.listdir(path)
     for file in meas_files:
         try:
@@ -173,16 +182,16 @@ def load_meas_data_q3(dds, num, RT, LD):
     return meas_data
 
 
-def make_boxplot(meas_data, q, dds):
+def make_boxplot(meas_data, dds, RT="ON", LD="OFF"):
     num = len(meas_data[0])
     # x = [256*pow(2,i) for i in range(15)]
     x = range(1, 16)
-    fig = plt.figure()
+    fig = plt.figure(figsize=[10,7.5])
     plt.boxplot(meas_data, showfliers=False)
     plt.xticks(x, file_sizes)
     plt.ylabel("latency [s]")
     plt.xlabel("data size")
-    plt.title(dds + " EVAL_NUM=" + str(num))
+    plt.title(f"{dds} : EVAL_NUM={str(num)}, RT={RT}, CPU LD={LD}")
     plt.grid()
     plt.show()
     # f_name = 'python_scripts/figures/'+q+'_box_'+str(num)+'_'+dds+'.pickle'
@@ -202,15 +211,66 @@ def open_boxplot():
     fig.show()
 
 
-def make_histogram(meas_data, q, dds):
-    num = len(meas_data[0]) + 1
+def make_histogram(meas_data, dds):
+    num = len(meas_data[0])
+    idx= range(15)
+    idx = [0, 9]
     for i, data in enumerate(meas_data):
-        plt.figure()
-        plt.hist(data)
-        plt.title(dds + " EVAL_NUM=" + str(num) + " " + file_sizes[i])
-        plt.xlabel('latency [s]')
-        plt.ylabel("count")
-        plt.show()
+        if i in idx:
+            plt.figure()
+            plt.hist(data)
+            plt.title(dds + " EVAL_NUM=" + str(num) + " " + file_sizes[i])
+            plt.xlabel('latency [s]')
+            plt.ylabel("count")
+            plt.show()
     # f_name = 'python_scripts/figures/'+q+'_hist_'+str(num)+'_'+dds+'.pickle'
     # with open(f_name, 'wb') as f:
     #     pickle.dump(fig, f)
+
+
+def make_group_boxplot(data):
+
+    # --- Labels for your data:
+    labels_list = file_sizes
+    xlocations = range(15)
+    width = 0.3
+
+
+    fig = plt.figure(figsize=[10,7.5])
+    ax = plt.gca()
+    ax.grid(True, linestyle='dotted')
+    ax.set_axisbelow(True)
+    ax.set_xticks(xlocations,labels_list)
+    plt.ylabel("latency [s]")
+    plt.xlabel("data size")
+    plt.title(f'Measurements for eval nums 120, 150 and 1000')
+
+    # --- Offset the positions per group:
+    positions_group1 = [x - (width + 0.01) for x in xlocations]
+    positions_group2 = xlocations
+    positions_group3 = [x + (width + 0.01) for x in xlocations]
+
+    plt.boxplot(data[0], boxprops=dict(color='red'), showfliers=False,
+                sym='r',
+                labels=[''] * len(labels_list),
+                positions=positions_group1,
+                widths=width
+                )
+    plt.legend(['120', '500', '1000'])
+
+    plt.boxplot(data[1], boxprops=dict(color='green'), showfliers=False,
+                labels=labels_list,
+                sym='g',
+                positions=positions_group2,
+                widths=width
+                )
+    plt.boxplot(data[2], boxprops=dict(color='blue'), showfliers=False,
+                labels=[''] * len(labels_list),
+                sym='b',
+                positions=positions_group3,
+                widths=width
+                )
+
+    # plt.savefig('boxplot_grouped.png')
+    # plt.savefig('boxplot_grouped.pdf')  # when publishing, use high quality PDFs
+    plt.show()

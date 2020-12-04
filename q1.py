@@ -7,12 +7,13 @@ from numpy import loadtxt
 
 from python_scripts.definitions import *
 
-EVAL_NUM = 3000
+EVAL_NUM = 1000
 RT = 'ON'
+LD = 'OFF'
 dds = 'fastrtps'
 rebuild = False
 q = 'q1'
-
+eval_nums = [120,500,1000]
 
 if __name__ == "__main__":
     a = set_RT(RT)
@@ -20,9 +21,9 @@ if __name__ == "__main__":
     rebuild = a or b
     if rebuild:
         rebuild_nodes()
-    run_meas(dds)
-    meas_data = load_meas_data()
-    make_boxplot(meas_data, q, dds)
+    run_meas(dds, EVAL_NUM, RT, LD)
+    meas_data = load_meas_data_q1(eval_nums)
+    make_group_boxplot(meas_data)
 
 
 
