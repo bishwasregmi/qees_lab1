@@ -42,3 +42,17 @@ c3 = [mu3 - t3, mu3 + t3]
 print(c1)
 print(c2)
 print(c3)
+
+fig = plt.figure(figsize= (10, 10))
+ax = fig.add_subplot(111)
+
+ax.set_title("Box Plot 128Kbyte", fontsize= 20)
+data = [c1, c2, c3]
+ax.boxplot(data,
+           labels=['fastrtps', 'connext', 'opensplice'],
+           showmeans=True)
+
+plt.xlabel("X")
+plt.ylabel("Y")
+
+plt.show()
