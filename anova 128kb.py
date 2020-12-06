@@ -4,13 +4,13 @@ from scipy.stats import t, norm
 import matplotlib.pyplot as plt
 
 
-f1 = open("measurements/transport_time_120_fastrtps_RT_OFF_LD_OFF/transport_time_128Kbyte.txt.txt", "r")
+f1 = open("measurements/transport_time_500_fastrtps_RT_ON_LD_OFF/transport_time_128Kbyte.txt", "r")
 d1 = f1.read().split()
 d1 = list(map(float, d1))
-f2 = open("measurements/transport_time_120_connext_RT_ON_LD_OFF/transport_time_128Kbyte.txtbyte.txt", "r")
+f2 = open("measurements/transport_time_500_connext_RT_ON_LD_OFF/transport_time_128Kbyte.txt", "r")
 d2 = f2.read().split()
 d2 = list(map(float, d2))
-f3 = open("measurements/transport_time_120_opensplice_RT_ON_LD_OFF/transport_time_128Kbyte.txt.txt", "r")
+f3 = open("measurements/transport_time_500_opensplice_RT_ON_LD_OFF/transport_time_128Kbyte.txt", "r")
 d3 = f3.read().split()
 d3 = list(map(float, d3))
 
