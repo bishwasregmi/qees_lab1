@@ -7,13 +7,8 @@ from numpy import loadtxt
 
 from python_scripts.definitions import *
 
-EVAL_NUM = 1000
-RT = 'ON'
-LD = 'OFF'
-dds = 'fastrtps'
-rebuild = False
-q = 'q1'
-eval_nums = [120,500,1000]
+EVAL_NUM = 3000
+
 
 if __name__ == "__main__":
     a = set_RT(RT)
