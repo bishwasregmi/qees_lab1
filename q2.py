@@ -7,7 +7,7 @@ import scipy
 from scipy.stats import t, norm
 import matplotlib.pyplot as plt
 
-fileObject = open("question2_transport_time.txt", "r")
+fileObject = open("measurements/question2_transport_time.txt", "r")
 # fileObject = open("transport_time_64Kbyte.txt", "r")
 data = fileObject.read().split()
 data = list(map(float, data))
