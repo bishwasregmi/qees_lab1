@@ -181,6 +181,22 @@ def load_meas_data_q3(dds, num, RT, LD):
             pass
     return meas_data
 
+def load_meas_data_q4():
+    path1 = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_500_fastrtps_RT_ON_LD_OFF/transport_time_256byte.txt')
+    path2 = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_500_fastrtps_RT_ON_LD_OFF/transport_time_128Kbyte.txt')
+    path3 = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_500_opensplice_RT_ON_LD_OFF/transport_time_256byte.txt')
+    path4 = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_500_opensplice_RT_ON_LD_OFF/transport_time_128Kbyte.txt')
+    path5 = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_500_connext_RT_ON_LD_OFF/transport_time_256byte.txt')
+    path6 = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_500_connext_RT_ON_LD_OFF/transport_time_128Kbyte.txt')
+
+    paths = [[path1, path3, path5], [path2, path4, path6]]
+    data = [[0]*3 for i in range(2)]
+
+    for i,_ in enumerate(paths):
+        for j,file in enumerate(paths[i]):
+            data[i][j] =loadtxt(file, dtype=np.float64)
+    return data
+
 
 def make_boxplot(meas_data, dds, RT="ON", LD="OFF"):
     num = len(meas_data[0])
