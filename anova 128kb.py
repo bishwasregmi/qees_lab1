@@ -54,5 +54,4 @@ ax.boxplot(data,
 
 plt.xlabel("X")
 plt.ylabel("Y")
-
 plt.show()
