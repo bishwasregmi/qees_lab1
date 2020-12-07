@@ -19,18 +19,19 @@ mu = np.mean(data)
 std = np.std(data)
 sem = std / np.sqrt(len(data))
 
-t1 = abs(t.ppf((1 - alpha_1) / 2, df=dof)) * sem
-t2 = abs(t.ppf((1 - alpha_2) / 2, df=dof)) * sem
+t1 = abs(t.ppf((1 - alpha_1) / 2, df=dof))
+t2 = abs(t.ppf((1 - alpha_2) / 2, df=dof))
 
-c1 = [mu - t1, mu + t1]
-c2 = [mu - t2, mu + t2]
-print(dof)
-print(std)
-print(mu)
-print(c1)
-print(c2)
-print(t1)
-print(t2)
+c1 = [mu - t1*sem, mu + t1*sem]
+c2 = [mu - t2*sem, mu + t2*sem]
+print(f"dof {dof}")
+print(f"std {std}")
+print(f"sem = {sem}")
+print(f"mu {mu}")
+print(f"c1 {c1}")
+print(f"c2 {c2}")
+print(f"t1 {t1}")
+print(f"t2 {t2}")
 # plt.hist(data, density=True, bins=20, color='y')
 plt.axvline(mu, color='k', label="sample_mean")
 plt.axvline(c1[0], color='g', label="ConfidenceInterval_"+str(alpha_1))

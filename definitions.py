@@ -187,7 +187,7 @@ def make_boxplot(meas_data, dds, RT="ON", LD="OFF"):
     # x = [256*pow(2,i) for i in range(15)]
     x = range(1, 16)
     fig = plt.figure(figsize=[10,7.5])
-    plt.boxplot(meas_data, showfliers=True)
+    plt.boxplot(meas_data, showfliers=False)
     plt.xticks(x, file_sizes)
     plt.ylabel("latency [s]")
     plt.xlabel("data size")
@@ -208,6 +208,9 @@ def make_histogram(meas_data, dds, RT, LD):
         if i in idx:
             plt.figure()
             plt.hist(data)
+            ax=plt.gca()
+            xlim = plt.xlim()
+            ax.set_xlim([0,xlim[1]])
             plt.title(dds + ": EVAL_NUM=" + str(num) + ", " + file_sizes[i]+ f", RT={RT}, CPU LD={LD}")
             plt.xlabel('latency [s]')
             plt.ylabel("count")
