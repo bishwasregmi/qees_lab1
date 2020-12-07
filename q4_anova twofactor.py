@@ -7,6 +7,8 @@ import seaborn as sns
 import researchpy as rp
 import statsmodels.api as sm
 from scipy.stats import t
+import scipy.stats as st
+
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from statsmodels.graphics.factorplots import interaction_plot
 import matplotlib.pyplot as plt
@@ -52,8 +54,6 @@ print(f"Anova table:\n {res}")
 
 
 # ------------CALCULATING CONFIDENCE INTERVALS FOR DDSes-----------
-
-
 latency = load_meas_data_q4()
 fastrtps = np.concatenate((latency[0][0], latency[1][0]))
 opensplice = np.concatenate((latency[0][1], latency[1][1]))
@@ -61,25 +61,37 @@ connext = np.concatenate((latency[0][2], latency[1][2]))
 
 dds_meas = [fastrtps, opensplice, connext]
 
-dds_mean = np.mean(dds_meas)
+# the global mean of the measurements
+total_mean = np.mean(latency)
 
-ssr = res['sum_sq'][3]                  # error variance(ssr) taken from the anova table
+# error variance(ssr) taken from the anova table
+ssr = res['sum_sq'][3]
 
-dds_std = ssr*np.sqrt(((3-1)/(3*2*500)))   # s_alpha = ssr * sqrt((a-1)/abr)
+# dtandard deviation of the factor dds: dds_std = ssr * sqrt((a-1)/abr)
+dds_std = ssr*np.sqrt(((3-1)/(3*2*500)))
 
+# degree of freedom of error: dof = ab(r-1) = 2994
+dof = 3*2*(500-1)
+#confidence level = 0.95 -> alpha = 0.025
+alpha = (1-0.95)/2
+# using normal instead of t-distr because dof very big -> z = 1.9599639845400545
+z_val = st.norm.ppf(alpha)
+# calculating half of the interval
+side = dds_std * abs(z_val)
 
+#calculating effect of the levels of the factor dds
+fastrtps_effect = np.mean(fastrtps)-total_mean
+opensplice_effect =  np.mean(opensplice)-total_mean
+connext_effect =  np.mean(connext)-total_mean
 
-for i,data in enumerate(dds_meas):
-    alpha = 0.95
-    dof = len(data) - 1
-    mu = np.mean(data)
-    std = np.std(data)
-    sem = std / np.sqrt(len(data))
+# calculating the intervals for each level
+ci_fastrtps = [fastrtps_effect - side, fastrtps_effect + side]
+ci_opensplice = [opensplice_effect - side, opensplice_effect + side]
+ci_connext = [connext_effect - side, connext_effect + side]
 
-    t_val = abs(t.ppf((1 - alpha) / 2, df=dof))
+print(f"CI fastrtps: {ci_fastrtps}")     # -> [-0.0007447844375547059, 0.0007490710375547059]
+print(f"CI opensplice: {ci_opensplice}") # -> [-0.0007709446765547059, 0.0007229107985547059]
+print(f"CI connext: {ci_connext}")       # -> [-0.0007250540985547059, 0.0007688013765547059]
 
-    c = [mu - t_val * sem, mu + t_val * sem]
-
-    print(f"Confidence interval {i} = {c}")
-
+print(min([np.linalg(ci_fastrtps), np.linalg(ci_opensplice), np.linalg(ci_connext)]))
 
