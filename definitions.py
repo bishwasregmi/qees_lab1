@@ -2,10 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
 import os
+import difflib
 from pathlib import Path
 from numpy import loadtxt
 import pickle
 from distutils.dir_util import copy_tree
+from scipy.stats import norm
 
 main_dir_path = Path(__file__).resolve().parents[1]
 meas_path = main_dir_path.joinpath("evaluation/transport_time")
@@ -152,6 +154,52 @@ def run_meas(dds, num, RT, LD):
         print(f"Measurements saved in {str(to_dir)}")
 
 
+def run_meas_q5(dds, num, RT, LD, FQ_SCL):
+    os.chdir(main_dir_path)
+    # cmd1 = "ros2 run interprocess_eval listener_interprocess__rmw_fastrtps_cpp"
+    # cmd2 = "ros2 run interprocess_eval talker_interprocess__rmw_fastrtps_cpp"
+    # os.system("gnome-terminal --title=newWindow -- bash -c  'bash'" )
+    # process = os.system("gnome-terminal --title=newWindow -- bash -c  'ros2 run interprocess_eval talker_interprocess__rmw_fastrtps_cpp; bash'")
+    # process.wait()
+
+    answer = " "
+    while answer != "yes" and answer != "no":
+        answer = input("Type 'yes' to Clean eval-times and Re-measure. Type 'no' to just plot. \n : ")
+    if answer == 'yes':
+        clean_eval_time()
+
+    while answer != "Done" and answer != "no":
+        if LD == 'OFF':
+            instr = "Run the following commands: \n" \
+                    "  *open terminal* \n" \
+                    "  cd " + str(main_dir_path) + " \n" \
+                    "  ros2 run interprocess_eval listener_interprocess__rmw_" + dds + "_cpp \n" \
+                    "  CTRL+SHIFT+N \n" \
+                    "  ros2 run interprocess_eval talker_interprocess__rmw_" + dds + "_cpp \n" \
+                    "Type 'Done' to continue when the nodes have finished\n:"
+        else:
+            instr = "Run the following commands and type 'Done' to continue : \n" \
+                    "  *open terminal* \n" \
+                    "  cd " + str(main_dir_path) + " \n" \
+                    "  ros2 run artificial_load CPU_load \n" \
+                    "  CTRL+SHIFT+N \n" \
+                    "  ros2 run interprocess_eval listener_interprocess__rmw_" + dds + "_cpp \n" \
+                    "  CTRL+SHIFT+N \n" \
+                    "  ros2 run interprocess_eval talker_interprocess__rmw_" + dds + "_cpp \n" \
+                    "Type 'Done' to continue when the nodes have finished\n:"
+        answer = input(instr)
+
+    if answer == "Done":
+        print("Calculating transport times ...")
+        subprocess.run("./calculate", shell=True)
+        print("Done.")
+
+        from_dir = os.path.join(main_dir_path, 'evaluation/transport_time')
+        to_dir = os.path.join(main_dir_path,
+                              'python_scripts/measurements/transport_time_' + str(num) + "_" + dds + "_RT_" + RT + "_LD_" + LD + "_FqScl_"+FQ_SCL)
+        copy_tree(from_dir, to_dir)
+        print(f"Measurements saved in {str(to_dir)}")
+
 def load_meas_data_q1(nums):
     RT = 'ON'
     dds = 'fastrtps'
@@ -181,6 +229,17 @@ def load_meas_data_q3(dds, num, RT, LD):
             pass
     return meas_data
 
+def load_meas_data_q5(dds, num, RT, LD, FQ_SCL):
+    meas_data = [0] * 15
+    path = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_' + str(num) + "_" + dds + "_RT_" + RT + "_LD_" + LD + "_FqScl_"+FQ_SCL)
+    meas_files = os.listdir(path)
+    for file in meas_files:
+        try:
+            meas_data[index[file]] = loadtxt(os.path.join(path, file), dtype=np.float64)
+        except:
+            pass
+    return meas_data
+
 def load_meas_data_q4():
     path1 = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_500_fastrtps_RT_ON_LD_OFF/transport_time_256byte.txt')
     path2 = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_500_fastrtps_RT_ON_LD_OFF/transport_time_128Kbyte.txt')
@@ -197,8 +256,39 @@ def load_meas_data_q4():
             data[i][j] =loadtxt(file, dtype=np.float64)
     return data
 
+def load_meas_data_q7(num):
 
-def make_boxplot(meas_data, dds, RT="ON", LD="OFF"):
+    meas_data = [[0]*15 for _ in range(num)]
+    for i in range(num):
+        path = os.path.join(main_dir_path, 'python_scripts/measurements/transport_time_' + str(num) + "nodes/node_"+str(i+1))
+        print(f'loading meas data from {path}')
+        meas_files = os.listdir(path)
+        for file in meas_files:
+            try:
+                meas_data[i][index[file]] = loadtxt(os.path.join(path, file), dtype=np.float64)
+            except:
+                pass
+
+    return meas_data
+
+def make_boxplot_q7(num,data):
+
+    plt.figure()
+    plt.title(f"{num} listener nodes")
+    x = range(1, 16)
+    for i in range(num):
+        plt.subplot(1,2,i+1)
+        plt.boxplot(data[i], showfliers=False)
+        plt.title(f"node {i+1}")
+        plt.ylim([0.0,0.012])
+        plt.grid()
+        plt.xticks(x, file_sizes, rotation=90)
+        plt.ylabel("latency [s]")
+        plt.xlabel("data size")
+    plt.show()
+
+
+def make_boxplot(meas_data, dds, RT="ON", LD="OFF", FQ_SCL=None):
     num = len(meas_data[0])
     # x = [256*pow(2,i) for i in range(15)]
     x = range(1, 16)
@@ -207,7 +297,10 @@ def make_boxplot(meas_data, dds, RT="ON", LD="OFF"):
     plt.xticks(x, file_sizes)
     plt.ylabel("latency [s]")
     plt.xlabel("data size")
-    plt.title(f"{dds} : EVAL_NUM={str(num)}, RT={RT}, CPU LD={LD}")
+    if (FQ_SCL!=None):
+        plt.title(f"{dds} : EVAL_NUM={str(num)}, RT={RT}, CPU LD={LD}, Fq Scl={FQ_SCL}")
+    else:
+        plt.title(f"{dds} : EVAL_NUM={str(num)}, RT={RT}, CPU LD={LD}")
     plt.grid()
     plt.show()
     # f_name = 'python_scripts/figures/'+q+'_box_'+str(num)+'_'+dds+'.pickle'
@@ -281,4 +374,144 @@ def make_group_boxplot(data):
 
     # plt.savefig('boxplot_grouped.png')
     # plt.savefig('boxplot_grouped.pdf')  # when publishing, use high quality PDFs
+    plt.show()
+
+def plot_errorbars_q7(nums):
+
+    plt.subplot(1,2,1)
+    for num in nums:
+        dat = load_meas_data_q7(num)
+        new_data = [[0] * num for _ in range(15)]
+
+        for i in range(15):
+            for j in range(num):
+                new_data[i][j] = (dat[j][i])
+
+        x = range(1,16)
+        means = []
+        stds = []
+        for i in range(15):
+            print(np.array(new_data).shape)
+            mean,std = norm.fit(new_data[i])
+            means.append(mean)
+            stds.append(std)
+
+        plt.errorbar(x, means, stds)
+    plt.xticks(x, file_sizes)
+    plt.ylabel("latency [s]")
+    plt.xlabel("data size")
+    plt.title("Mean and std. of latencies of all listening nodes for \n different datasizes and different no. of multiple listeners  ")
+    plt.legend([f'{nums[0]} listeners', f'{nums[1]} listeners', f'{nums[2]} listeners', f'{nums[3]} listeners', f'{nums[4]} listeners'])
+    plt.grid()
+    # plt.show()
+
+
+    plt.subplot(1,2,2)
+    plot_errorbars_q7_zoomed(nums)
+    plt.show()
+
+    # print(new_data[0])
+    # print(f"mean {means[1]} std {stds[1]}")
+    # plt.boxplot(new_data[1])
+    # plt.show()
+def plot_errorbars_q7_zoomed(nums):
+
+    for num in nums:
+        dat = load_meas_data_q7(num)
+        new_data = [[0] * num for _ in range(1,10)]
+
+        for i in range(1,10):
+            for j in range(num):
+                new_data[i-1][j] = (dat[j][i])
+
+        x = range(1,10)
+        means = []
+        stds = []
+        for i in range(9):
+            # print(np.array(new_data).shape)
+            mean,std = norm.fit(new_data[i])
+            means.append(mean)
+            stds.append(std)
+
+        plt.errorbar(x, means, stds)
+    plt.xticks(x, file_sizes[1:10])
+    plt.ylabel("latency [s]")
+    plt.xlabel("data size")
+    plt.title("Zoomed in for datasizes between 512B and 128kB ")
+    plt.legend([f'{nums[0]} listeners', f'{nums[1]} listeners', f'{nums[2]} listeners', f'{nums[3]} listeners', f'{nums[4]} listeners'])
+    plt.grid()
+    # plt.show()
+
+def plot_errorbars_q7_pernode(num = 10):
+    plt.subplot(1,2,1)
+    data = load_meas_data_q7(num)
+    x = range(2,10)
+    for n in range(10):
+        means = []
+        stds = []
+        for i in range(1,9):
+            print(np.array(data).shape)
+            # mean,std = norm.fit(data[n][i])
+            mean = np.median(data[n][i])
+            std = np.std(data[n][i])
+            means.append(mean)
+            stds.append(std)
+
+        plt.errorbar(x, means, stds)
+    plt.xticks(x, file_sizes[1:9])
+    plt.ylabel("latency [s]")
+    plt.xlabel("data size")
+    plt.title("Median and std. of latencies of individual nodes for \n 10 active listeners (data size < 65kB) ")
+    plt.legend(['node 1', 'node 2', 'node 3', 'node 4', 'node 5', 'node 6', 'node 7', 'node 8', 'node 9', 'node 10'])
+    plt.grid()
+
+    plt.subplot(1,2,2)
+    x = range(10, 16)
+    for n in range(10):
+        means = []
+        stds = []
+        for i in range(9,15):
+            print(np.array(data).shape)
+            # mean, std = norm.fit(data[n][i])
+            mean = np.median(data[n][i])
+            std = np.std(data[n][i])
+            means.append(mean)
+            stds.append(std)
+
+        plt.errorbar(x, means, stds)
+    plt.xticks(x, file_sizes[9:15])
+    plt.ylabel("latency [s]")
+    plt.xlabel("data size")
+    plt.title(
+        "Median and std. of latencies of individual nodes for \n 10 active listeners (data size > 65kB) ")
+    plt.legend(
+        ['node 1', 'node 2', 'node 3', 'node 4', 'node 5', 'node 6', 'node 7', 'node 8', 'node 9', 'node 10'])
+    plt.grid()
+    plt.show()
+
+
+
+def plot_mean_std_medians(num, data):
+
+    medians = np.ndarray([num,15])
+    for i in range(num):
+        for j in range(15):
+            medians[i,j] = (np.median(data[i][j]))
+    # plt.boxplot(medians, showfliers=False)
+
+    medians= medians.T
+    means = []
+    stds = []
+    print(medians.shape)
+    for i in range(15):
+        mean,std= norm.fit(medians[i])
+        means.append(mean)
+        stds.append(std)
+    x = range(1,16)
+    plt.errorbar(x,means,stds)
+    plt.xticks(x, file_sizes)
+    plt.ylabel("latency [s]")
+    plt.xlabel("data size")
+    plt.title("Mean and std of median latencies of 10 simultaneously \n active listener nodes for different data sizes")
+    plt.grid()
     plt.show()

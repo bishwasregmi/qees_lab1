@@ -95,3 +95,4 @@ print(f"CI connext: {ci_connext}")       # -> [-0.0007250540985547059, 0.0007688
 
 print(min([np.linalg(ci_fastrtps), np.linalg(ci_opensplice), np.linalg(ci_connext)]))
 
+
